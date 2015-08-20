@@ -45,6 +45,7 @@
     (if (pair? x)
       (list? (cdr x))
       #f)))
+
 (define (zero? x) (= x 0))
 (define (even? x) (= (modulo x 2) 0))
 (define (odd? x) (not (even? x)))

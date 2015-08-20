@@ -568,17 +568,26 @@ public class interpreter {
 		}
 		return new Pair(lst.get(0), ret);
 	}
-
-	static Type quoteList(int l, int r) {
-		if (l > r) return new Null();
-		ArrayList <Type> ret = new ArrayList <Type>();
-		Function func = (Function)env0.find("quote");
-		for (int i = l; i <= r; i = match[i] + 1) {
-			ret.add(apply(env0, func, i, match[i]));
+	
+	static Type evalQuote(int l, int r) {
+		if (l == r) {
+			if (TypeJudge.isNumber(elements[l])) return new Number(elements[l]);
+			if (TypeJudge.isString(elements[l])) return new Str(elements[l].substring(1, elements[l].length() - 1));
+			if (TypeJudge.isCharacter(elements[l])) return new Char(elements[l].charAt(2));
+			if (TypeJudge.isBoolean(elements[l])) {
+				if (elements[l].charAt(1) == 't') return new Bool(true);
+				return new Bool(false);
+			}
+			return new Quote(elements[l]);
 		}
-		return list(ret);
+		l++; r--;
+		ArrayList <Type> contents = new ArrayList <Type> ();
+		for (int i = l; i <= r; i = match[i] + 1) {
+			contents.add(evalQuote(i, match[i]));
+		}
+		return list(contents);
 	}
-
+	
 	static Type append(Type a, Type b) {
 		if (a.isNull()) return b;
 		return new Pair(((Pair)a).car, append(((Pair)a).cdr, b));
@@ -612,195 +621,46 @@ public class interpreter {
 		return new Function(args, ext, exel, exer, envNow, null);
 	}
 
-	static Type apply(Environment prev, Function f, int l, int r) {
+	static Type apply(Function f, ArrayList <Type> args) {
 		if (f.mark == null) {
 			Environment env1 = new Environment(f.env);
-			ArrayList <Type> plug = new ArrayList <Type> ();
-			for (int i = l; i <= r; i = match[i] + 1) {
-				plug.add(eval(i, match[i], prev));
-			}
 			for (int i = 0; i < f.arguments.size(); i++) {
-				env1.add(f.arguments.get(i), plug.get(i));
+				env1.add(f.arguments.get(i), args.get(i));
 			}
 			if (f.extra != null) {
 				ArrayList <Type> extraList = new ArrayList <Type> ();
-				for (int i = f.arguments.size(); i < plug.size(); i++) 
-					extraList.add(plug.get(i));
+				for (int i = f.arguments.size(); i < args.size(); i++) 
+					extraList.add(args.get(i));
 				env1.add(f.extra, list(extraList));
-			}
+			}		
 			return eval(f.left, f.right, env1);
 		} else {
-			if (f.mark.equals("display")) {
-				eval(l, r, prev).display();
-				return new Null();
-			}
-			if (f.mark.equals("newline")) {
-				System.out.println();
-				return new Null();
-			}
-			if (f.mark.equals("=")) {
-				Number x = (Number)eval(l, match[l], prev),
-					   y = (Number)eval(match[l] + 1, r, prev);
-				return equal(x, y);
-			}
-			if (f.mark.equals(">")) {
-				Number x = (Number)eval(l, match[l], prev),
-					   y = (Number)eval(match[l] + 1, r, prev);
-				return greater(x, y);
-			}
-			if (f.mark.equals("<")) {
-				Number x = (Number)eval(l, match[l], prev),
-					   y = (Number)eval(match[l] + 1, r, prev);
-				return less(x, y);
-			}
-			if (f.mark.equals(">=")) {
-				Number x = (Number)eval(l, match[l], prev),
-					   y = (Number)eval(match[l] + 1, r, prev);
-				return greaterOrEqual(x, y);
-			}
-			if (f.mark.equals("<=")) {
-				Number x = (Number)eval(l, match[l], prev),
-					   y = (Number)eval(match[l] + 1, r, prev);
-				return lessOrEqual(x, y);
-			}
-			if (f.mark.equals("+")) {
-				return addList(argsList(l, r, prev));
-			}
-			if (f.mark.equals("-")) {
-				return subtList(argsList(l, r, prev));
-			}
-			if (f.mark.equals("*")) {
-				return mulList(argsList(l, r, prev));
-			}
-			if (f.mark.equals("/")) {
-				return divList(argsList(l, r, prev));
-			}
-			if (f.mark.equals("modulo") || f.mark.equals("remainder")) {
-				Number x = (Number)eval(l, match[l], prev),
-					   y = (Number)eval(match[l] + 1, r, prev);
-				return modulo(x, y);		
-			}
-			if (f.mark.equals("quotient")) {
-				Number x = (Number)eval(l, match[l], prev),
-					   y = (Number)eval(match[l] + 1, r, prev);
-				return quotient(x, y);			
-			}
-			if (f.mark.equals("and")) {
-				return andList(argsList(l, r, prev)); 
-			}
-			if (f.mark.equals("or")) {
-				return orList(argsList(l, r, prev));
-			}
-			if (f.mark.equals("not")) {
-				return not((Bool)eval(l, r, prev));
-			}
-			if (f.mark.equals("cons")) {
-				Type x = eval(l, match[l], prev),
-					 y = eval(match[l] + 1, r, prev);
-				return cons(x, y);
-			}
-			if (f.mark.equals("car")) {
-				return ((Pair)eval(l, r, prev)).car;
-			}
-			if (f.mark.equals("cdr")) {
-				return ((Pair)eval(l, r, prev)).cdr;
-			}
-			if (f.mark.equals("list")) {
-				return list(argsList(l, r, prev));
-			}
-			if (f.mark.equals("append")) {
-				return appendList(argsList(l, r, prev));
-			}
-			if (f.mark.equals("equal?")) {
-				Type x = eval(l, match[l], prev),
-					 y = eval(match[l] + 1, r, prev);
-				return equal(x, y);
-			}
-			if (f.mark.equals("eq?")) {
-				Type x = eval(l, match[l], prev),
-					 y = eval(match[l] + 1, r, prev);
-				return eq(x, y);
-			}
-			if (f.mark.equals("null?")) {
-				return new Bool(eval(l, r, prev).isNull());
-			}
-			if (f.mark.equals("pair?")) {
-				return new Bool(eval(l, r, prev).isPair());
-			}
-			if (f.mark.equals("eqv?")) {
-				Type x = eval(l, match[l], prev),
-					 y = eval(match[l] + 1, r, prev);
-				return eqv(x, y);
-			}
-			if (f.mark.equals("if")) {	
-				boolean x = ((Bool)eval(l, match[l], prev)).val;
-				l = match[l] + 1;
-				if (x) {
-					return eval(l, match[l], prev); 
-				} else {
-					return eval(match[l] + 1, r, prev);
-				}
-			}			
-			if (f.mark.equals("cond")) {
-				for (int i = l; i <= r; i = match[i] + 1) {
-					if (((Bool)eval(i + 1, match[i + 1], prev)).val)
-						return eval(match[i + 1] + 1, match[i] - 1, prev);
-				}	
-			}
-
-			if (f.mark.equals("quote")) {
-				if (l == r) {
-					if (TypeJudge.isNumber(elements[l])) return new Number(elements[l]);
-					if (TypeJudge.isString(elements[l])) return new Str(elements[l].substring(1, elements[l].length() - 1));
-					if (TypeJudge.isCharacter(elements[l])) return new Char(elements[l].charAt(2));
-					if (TypeJudge.isBoolean(elements[l])) {
-						if (elements[l].charAt(1) == 't') return new Bool(true);
-						return new Bool(false);
-					}			
-					return new Quote(elements[l]);
-				}
-				return quoteList(l + 1, r - 1);
-			}
-
-			if (f.mark.equals("define")) {
-				if (match[l] != l) 
-					prev.add(elements[l + 1], defFunc(l + 2, match[l] - 1, match[l] + 1, r, prev));
-				else prev.add(elements[l], eval(l + 1, r, prev));
-				return new Null();
-			}
-
-			if (f.mark.equals("lambda")) {
-				return defFunc(l + 1, match[l] - 1, match[l] + 1, r, prev);
-			}
-
-			if (f.mark.equals("begin")) {
-				Environment newEnv = new Environment(prev);
-				return eval(l + 1, r, newEnv);
-			}
-
-			if (f.mark.equals("let")) {
-				Environment newEnv = new Environment(prev);
-				for (int i = l + 1; i < match[l]; i = match[i] + 1) {
-					newEnv.add(elements[i + 1], eval(i + 2, match[i] - 1, prev));
-				}
-				return eval(match[l] + 1, r, newEnv);	
-			}
-			if (f.mark.equals("let*")) {
-				Environment newEnv = null;
-				for (int i = l + 1; i < match[i]; i = match[i] + 1) {
-					newEnv = new Environment(prev);
-					newEnv.add(elements[i + 1], eval(i + 2, match[i] - 1, prev));
-					prev = newEnv;
-				}
-				return eval(match[l] + 1, r, newEnv);
-			}
-			if (f.mark.equals("letrec")) {
-				Environment newEnv = new Environment(prev);
-				for (int i = l + 1; i < match[l]; i = match[i] + 1) {
-					newEnv.add(elements[i + 1], eval(i + 2, match[i] - 1, newEnv));
-				}
-				return eval(match[l] + 1,  r, newEnv);
-			}
+			if (f.mark.equals("display")) {args.get(0).display();}
+			if (f.mark.equals("newline")) {System.out.println();}
+			if (f.mark.equals("=")) return equal(args.get(0), args.get(1));
+			if (f.mark.equals(">")) return greater((Number)args.get(0), (Number)args.get(1));
+			if (f.mark.equals("<")) return less((Number)args.get(0), (Number)args.get(1));
+			if (f.mark.equals(">=")) return greaterOrEqual((Number)args.get(0), (Number)args.get(1));
+			if (f.mark.equals("<=")) return lessOrEqual((Number)args.get(0), (Number)args.get(1));
+			if (f.mark.equals("+")) return addList(args);
+			if (f.mark.equals("-")) return subtList(args);
+			if (f.mark.equals("*")) return mulList(args);
+			if (f.mark.equals("/")) return divList(args);
+			if (f.mark.equals("modulo")) return modulo((Number)args.get(0), (Number)args.get(1));
+			if (f.mark.equals("quotient")) return quotient((Number)args.get(0), (Number)args.get(1));
+			if (f.mark.equals("and")) return andList(args);
+			if (f.mark.equals("or")) return orList(args);
+			if (f.mark.equals("not")) return not((Bool)args.get(0));
+			if (f.mark.equals("cons")) return cons(args.get(0), args.get(1));
+			if (f.mark.equals("car")) return ((Pair)args.get(0)).car;
+			if (f.mark.equals("cdr")) return ((Pair)args.get(0)).cdr;
+			if (f.mark.equals("list")) return list(args);
+			if (f.mark.equals("append")) return appendList(args);
+			if (f.mark.equals("equal?")) return equal(args.get(0), args.get(1));
+			if (f.mark.equals("eq?")) return eq(args.get(0), args.get(1));
+			if (f.mark.equals("eqv?")) return eqv(args.get(0), args.get(1));
+			if (f.mark.equals("null?")) return new Bool(args.get(0).isNull());
+			if (f.mark.equals("pair?")) return new Bool(args.get(0).isPair());
 		}
 		return new Null();
 	}
@@ -813,8 +673,7 @@ public class interpreter {
 			if (TypeJudge.isBoolean(elements[l])) {
 				if (elements[l].charAt(1) == 't') return new Bool(true);
 				return new Bool(false);
-			}
-			
+			}	
 			return envNow.find(elements[l]);
 		}
 		Type ret = new Null();
@@ -822,11 +681,117 @@ public class interpreter {
 			if (r == match[l]) {
 				l++; r--;
 				if (l > r) return new Null();
+				if (elements[l].equals("if")) {
+					l++;	
+					boolean x = ((Bool)eval(l, match[l], envNow)).val;
+					l = match[l] + 1;
+					if (x) {
+						return eval(l, match[l], envNow); 
+					} else {
+						return eval(match[l] + 1, r, envNow);
+					}
+				}			
+				if (elements[l].equals("cond")) {
+					l++;
+					for (int i = l; i <= r; i = match[i] + 1) {
+						if (((Bool)eval(i + 1, match[i + 1], envNow)).val)
+							return eval(match[i + 1] + 1, match[i] - 1, envNow);
+					}
+					return new Null();	
+				}
+
+				if (elements[l].equals("quote")) {
+					l++;
+					return evalQuote(l, r);
+				}
+
+				if (elements[l].equals("define")) {
+					l++;
+					if (match[l] != l) 
+						envNow.add(elements[l + 1], defFunc(l + 2, match[l] - 1, match[l] + 1, r, envNow));
+					else envNow.add(elements[l], eval(l + 1, r, envNow));
+					return new Null();
+				}
+	
+				if (elements[l].equals("lambda")) {
+					l++;
+					return defFunc(l + 1, match[l] - 1, match[l] + 1, r, envNow);
+				}
+	
+				if (elements[l].equals("begin")) {
+					l++;
+					Environment newEnv = new Environment(envNow);
+					return eval(l, r, newEnv);
+				}
+	
+				if (elements[l].equals("let")) {
+					l++;
+					Environment newEnv = new Environment(envNow);
+					for (int i = l + 1; i < match[l]; i = match[i] + 1) {
+						newEnv.add(elements[i + 1], eval(i + 2, match[i] - 1, envNow));
+					}
+					return eval(match[l] + 1, r, newEnv);	
+				}
+
+				if (elements[l].equals("let*")) {
+					l++;
+					Environment newEnv = null;
+					for (int i = l + 1; i < match[i]; i = match[i] + 1) {
+						newEnv = new Environment(envNow);
+						newEnv.add(elements[i + 1], eval(i + 2, match[i] - 1, envNow));
+						envNow = newEnv;
+					}
+					return eval(match[l] + 1, r, newEnv);
+				}
+
+				if (elements[l].equals("letrec")) {
+					l++;
+					Environment newEnv = new Environment(envNow);
+					for (int i = l + 1; i < match[l]; i = match[i] + 1) {
+						newEnv.add(elements[i + 1], eval(i + 2, match[i] - 1, newEnv));
+					}
+					return eval(match[l] + 1,  r, newEnv);
+				}
+
+				if (elements[l].equals("apply")) {
+					l++;
+					Type lst = eval(match[l] + 1, r, envNow);
+					ArrayList <Type> args = new ArrayList <Type>();
+					while (lst.isPair()) {
+						args.add(((Pair)lst).car);
+						lst = ((Pair)lst).cdr;
+					}
+					return apply((Function)eval(l, match[l], envNow), args);
+				}
+				
+				if (elements[l].equals("map")) {
+					l++;
+					ArrayList <Type> Map = new ArrayList <Type>();
+					ArrayList <Type> Lists = new ArrayList <Type>();
+					Function func = (Function)eval(l, match[l], envNow);
+					l = match[l] + 1;			
+					for (int i = l; i <= r; i = match[i] + 1)
+						Lists.add(eval(i, match[i], envNow));
+					while (!Lists.get(0).isNull()) {
+						ArrayList <Type> args = new ArrayList <Type>();
+						for (int i = 0; i < Lists.size(); i++) {
+							args.add(((Pair)Lists.get(i)).car);
+							Lists.set(i, ((Pair)Lists.get(i)).cdr);
+						}
+						Map.add(apply(func, args));
+					}
+					return list(Map);
+				}
 				Function func = (Function)eval(l, match[l], envNow);
-				return apply(envNow, func, match[l] + 1, r);
-			} 
-			for (int i = l; i <= r; i = match[i] + 1) {
-				ret = eval(i, match[i], envNow);
+				l = match[l] + 1;
+				ArrayList <Type> args = new ArrayList <Type>();
+				for (int i = l; i <= r; i = match[i] + 1) {
+					args.add(eval(i, match[i], envNow));
+				}
+				return apply(func, args);
+			} else {
+				for (int i = l; i <= r; i = match[i] + 1) 
+					ret = eval(i, match[i], envNow);
 			}
 		}
 		return ret;
@@ -863,15 +828,6 @@ public class interpreter {
 		env0.add("append", pres("append"));
 		env0.add("car", pres("car"));
 		env0.add("cdr", pres("cdr"));
-		env0.add("define", pres("define"));
-		env0.add("begin", pres("begin"));
-		env0.add("let", pres("let"));
-		env0.add("let*", pres("let*"));
-		env0.add("letrec", pres("letrec"));
-		env0.add("if", pres("if"));
-		env0.add("cond", pres("cond"));
-		env0.add("lambda", pres("lambda"));
-		env0.add("quote", pres("quote"));
 		env0.add("null?", pres("null?"));
 		env0.add("pair?", pres("pair?"));
 		env0.add("else", new Bool(true));
@@ -884,7 +840,7 @@ public class interpreter {
 			pre += " ";
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 	}
 
 	static void calMatch() {
@@ -912,6 +868,7 @@ public class interpreter {
 				words = "";
 				continue;
 			}
+	
 			switch (now) {
 				case '(':
 					if (!inparenthese)
@@ -968,7 +925,7 @@ public class interpreter {
 	public static void main(String[] args) {
 		prelude();
 		try {
-			BufferedReader br = new BufferedReader(new FileReader("Coupling.scm"));
+			BufferedReader br = new BufferedReader(new FileReader("test.scm"));
 			String x = pre;
 			while (br.ready()) {
 				String newline = br.readLine();
