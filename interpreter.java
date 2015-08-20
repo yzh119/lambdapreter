@@ -8,6 +8,7 @@ abstract class Type {
 	abstract boolean isFun();
 	abstract boolean isBool();
 	abstract boolean isStr();
+	abstract boolean isChar();
 	abstract boolean isPair();
 	abstract boolean isNull();
 	abstract boolean isQuote();
@@ -47,6 +48,12 @@ class TypeJudge {
 
 	static public boolean isBoolean(String x) {
 		if (x.equals("#f") || x.equals("#t")) return true;
+		return false;
+	}
+	
+	static public boolean isCharacter(String x) {
+		if (x.length() == 3)
+			if (x.charAt(0) == '#' && x.charAt(1) == '\\') return true;
 		return false;
 	}
 
@@ -123,27 +130,14 @@ class Number extends Type{
 		}
 	}
 
-	boolean isNum() {
-		return true;
-	}
-	boolean isFun() {
-		return false;
-	}
-	boolean isBool() {
-		return false;
-	}
-	boolean isStr() {
-		return false;
-	}
-	boolean isPair() {
-		return false; 
-	}
-	boolean isNull() {
-		return false;
-	}
-	boolean isQuote() {
-		return false;
-	}
+	boolean isNum() {return true;}
+	boolean isFun() {return false;}
+	boolean isChar() {return false;}
+	boolean isBool() {return false;}
+	boolean isStr() {return false;}
+	boolean isPair() {return false; }
+	boolean isNull() {return false;}
+	boolean isQuote() {return false;}
 }			
 
 class Function extends Type{
@@ -164,27 +158,14 @@ class Function extends Type{
 		System.out.print("#:<procedure>");
 	}
 
-	boolean isNum() {
-		return false;
-	}
-	boolean isFun() {
-		return true;
-	}
-	boolean isBool() {
-		return false;
-	}
-	boolean isStr() {	
-		return false;
-	}
-	boolean isPair() {
-		return false;
-	}
-	boolean isNull() {
-		return false;
-	}
-	boolean isQuote() {
-		return false;
-	}
+	boolean isNum() {return false;}
+	boolean isFun() {return true;}
+	boolean isChar() {return false;}
+	boolean isBool() {return false;}
+	boolean isStr() {return false;}
+	boolean isPair() {return false;}
+	boolean isNull() {return false;}
+	boolean isQuote() {return false;}
 }
 
 class Str extends Type{
@@ -195,29 +176,33 @@ class Str extends Type{
 	void display() {
 		System.out.print(val);
 	}
-	boolean isNum() {
-		return false;
-	}
-	boolean isFun() {
-		return false;		
-	}
-	boolean isBool() {
-		return false;
-	}
-	boolean isStr() {
-		return true;
-	}
-	boolean isPair() {
-		return false;
-	}
-	boolean isNull() {
-		return false;
-	}
-	boolean isQuote() {
-		return false;
-	}
+	boolean isNum() {return false;}
+	boolean isFun() {return false;}
+	boolean isChar() {return false;}
+	boolean isBool() {return false;}
+	boolean isStr() {return true;}
+	boolean isPair() {return false;}
+	boolean isNull() {return false;}
+	boolean isQuote() {return false;}
 }	
 
+class Char extends Type{
+	char val;
+	Char (char x) {
+		val = x;
+	}
+	void display() {
+		System.out.print("#\\" + val);
+	}
+	boolean isNum() {return false;}
+	boolean isFun() {return false;}
+	boolean isChar() {return true;}
+	boolean isBool() {return false;}
+	boolean isStr() {return false;}
+	boolean isPair() {return false;}
+	boolean isNull() {return false;}
+	boolean isQuote() {return false;}
+}
 class Pair extends Type{
 	Type car, cdr;
 	Pair (Type x, Type y) {
@@ -241,27 +226,14 @@ class Pair extends Type{
 	void display() {
 		displayPair(true);
 	}
-	boolean isNum() {
-		return false;
-	}
-	boolean isFun() {
-		return false;
-	}
-	boolean isBool() {
-		return false;
-	}
-	boolean isStr() {
-		return false;
-	}
-	boolean isPair() {
-		return true;
-	}
-	boolean isNull() {
-		return false;
-	}
-	boolean isQuote() {
-		return false;
-	} 
+	boolean isNum() {return false;}
+	boolean isFun() {return false;}
+	boolean isChar() {return false;}
+	boolean isBool() {return false;}
+	boolean isStr() {return false;}
+	boolean isPair() {return true;}
+	boolean isNull() {return false;}
+	boolean isQuote() {return false;} 
 }	
 
 class Null extends Type{
@@ -269,27 +241,14 @@ class Null extends Type{
 	void display() {
 		System.out.print("()");
 	}			
-	boolean isNum() {
-		return false;
-	}
-	boolean isFun() {
-		return false;
-	}
-	boolean isBool() {
-		return false;
-	}
-	boolean isStr() {
-		return false;
-	}
-	boolean isPair() {
-		return false;
-	}
-	boolean isNull() {
-		return true;
-	}
-	boolean isQuote() {
-		return false;
-	}
+	boolean isNum() {return false;}
+	boolean isFun() {return false;}
+	boolean isChar() {return false;}
+	boolean isBool() {return false;}
+	boolean isStr() {return false;}
+	boolean isPair() {return false;}
+	boolean isNull() {return true;}
+	boolean isQuote() {return false;}
 }
 
 class Quote extends Type{
@@ -300,27 +259,14 @@ class Quote extends Type{
 	void display() {
 		System.out.print(val);
 	}
-	boolean isNum() {
-		return false;
-	}
-	boolean isFun() {
-		return false;
-	}
-	boolean isBool() {
-		return false;
-	}
-	boolean isStr() {
-		return false;
-	}
-	boolean isPair() {
-		return false;
-	}			
-	boolean isNull() {
-		return false;
-	}
-	boolean isQuote() {
-		return true;
-	}
+	boolean isNum() {return false;}
+	boolean isFun() {return false;}
+	boolean isChar() {return false;}
+	boolean isBool() {return false;}
+	boolean isStr() {return false;}
+	boolean isPair() {return false;}			
+	boolean isNull() {return false;}
+	boolean isQuote() {return true;}
 }
 
 class Bool extends Type{
@@ -332,27 +278,14 @@ class Bool extends Type{
 		if (val == true) System.out.print("#t");
 			else System.out.print("#f");
 	}
-	boolean isNum() {
-		return false;
-	}
-	boolean isFun() {
-		return false;
-	}
-	boolean isBool() {
-		return true;
-	}
-	boolean isStr() {
-		return false;
-	}
-	boolean isPair() {
-		return false;
-	}
-	boolean isNull() {
-		return false;
-	}
-	boolean isQuote() {
-		return false;
-	}
+	boolean isNum() {return false;}
+	boolean isFun() {return false;}
+	boolean isChar() {return false;}
+	boolean isBool() {return true;}
+	boolean isStr() {return false;}
+	boolean isPair() {return false;}
+	boolean isNull() {return false;}
+	boolean isQuote() {return false;}
 }
 
 public class interpreter {
@@ -538,6 +471,9 @@ public class interpreter {
 		}
 		if (a.isFun() && b.isFun()) {
 			if (a == b) ret = true;
+		}
+		if (a.isChar() && b.isChar()) {
+			if (((Char)a).val == ((Char)b).val) ret = true;
 		}
 		return new Bool(ret);
 	}
@@ -816,6 +752,7 @@ public class interpreter {
 				if (l == r) {
 					if (TypeJudge.isNumber(elements[l])) return new Number(elements[l]);
 					if (TypeJudge.isString(elements[l])) return new Str(elements[l].substring(1, elements[l].length() - 1));
+					if (TypeJudge.isCharacter(elements[l])) return new Char(elements[l].charAt(2));
 					if (TypeJudge.isBoolean(elements[l])) {
 						if (elements[l].charAt(1) == 't') return new Bool(true);
 						return new Bool(false);
@@ -872,6 +809,7 @@ public class interpreter {
 		if (l == r) {
 			if (TypeJudge.isNumber(elements[l])) return new Number(elements[l]);
 			if (TypeJudge.isString(elements[l])) return new Str(elements[l].substring(1, elements[l].length() - 1));
+			if (TypeJudge.isCharacter(elements[l])) return new Char(elements[l].charAt(2));
 			if (TypeJudge.isBoolean(elements[l])) {
 				if (elements[l].charAt(1) == 't') return new Bool(true);
 				return new Bool(false);
@@ -968,6 +906,12 @@ public class interpreter {
 		String words = "";
 		for (int i = 0; i < l; i++) {
 			char now = x.charAt(i);
+			if (words.length() == 2 && words.charAt(0) == '#' && words.charAt(1) == '\\') {
+				words += now;
+				elements[tail++] = words;
+				words = "";
+				continue;
+			}
 			switch (now) {
 				case '(':
 					if (!inparenthese)
@@ -995,7 +939,6 @@ public class interpreter {
 			}			
 			if (((now != '\t' && now != ' ') && now != '\t') || inparenthese) words += now;
 		}
-		if (words != "") elements[tail++] = words;
 	}
 	
 	static String execute(String origin, int l, int r) {
@@ -1025,10 +968,14 @@ public class interpreter {
 	public static void main(String[] args) {
 		prelude();
 		try {
-			BufferedReader br = new BufferedReader(new FileReader("test.scm"));
+			BufferedReader br = new BufferedReader(new FileReader("Coupling.scm"));
 			String x = pre;
 			while (br.ready()) {
 				String newline = br.readLine();
+				int endplace = newline.length();
+				for (int i = 0; i < newline.length(); i++)
+					if (newline.charAt(i) == ';') {endplace = i; break;}
+				newline = newline.substring(0, endplace);
 				x = x + newline;
 			}
 			x += " ";
@@ -1038,7 +985,7 @@ public class interpreter {
 			e.printStackTrace();
 		}
 		for (int i = 0; i < tail; i++) 
-			if (!TypeJudge.isString(elements[i])) elements[i] = elements[i].toLowerCase();
+			if (!TypeJudge.isString(elements[i]) && !TypeJudge.isCharacter(elements[i])) elements[i] = elements[i].toLowerCase();
 		calMatch();
 		eval(0, tail - 1, env0);
 	}
