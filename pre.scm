@@ -56,4 +56,4 @@
     
 (define (assq obj alst)
   (if (null? alst) #f
-      (if (equal? obj (caar alst)) (car alst) (assq obj (cdr alst))))) 
+      (if (eq? obj (caar alst)) (car alst) (assq obj (cdr alst))))) 
