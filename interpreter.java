@@ -755,13 +755,20 @@ public class interpreter {
 
 				if (elements[l].equals("apply")) {
 					l++;
-					Type lst = eval(match[l] + 1, r, envNow);
+					Function func = (Function)eval(l, match[l], envNow);
+					l = match[l] + 1; 
+					Type lst = eval(l, match[l], envNow);
 					ArrayList <Type> args = new ArrayList <Type>();
+					while (match[l] != r) {
+						args.add(lst);
+						l = match[l] + 1;
+						lst = eval(l, match[l], envNow);
+					}
 					while (lst.isPair()) {
 						args.add(((Pair)lst).car);
 						lst = ((Pair)lst).cdr;
 					}
-					return apply((Function)eval(l, match[l], envNow), args);
+					return apply(func, args);
 				}
 				
 				if (elements[l].equals("map")) {
